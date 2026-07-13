@@ -33,6 +33,7 @@ export default function ProfileForm({
             min={10}
             max={100}
             value={profile.age}
+            onFocus={(e) => e.currentTarget.select()}
             onChange={(e) => onChange({ ...profile, age: Number(e.target.value) || 0 })}
             className="mt-1 block w-full border-b-2 border-[#1A1A16] bg-transparent py-1 text-base font-medium text-[#1A1A16] outline-none focus-visible:border-[#E4572E]"
           />
@@ -45,6 +46,7 @@ export default function ProfileForm({
             min={100}
             max={250}
             value={profile.heightCm}
+            onFocus={(e) => e.currentTarget.select()}
             onChange={(e) => onChange({ ...profile, heightCm: Number(e.target.value) || 0 })}
             className="mt-1 block w-full border-b-2 border-[#1A1A16] bg-transparent py-1 text-base font-medium text-[#1A1A16] outline-none focus-visible:border-[#E4572E]"
           />

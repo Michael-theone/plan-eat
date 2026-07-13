@@ -40,6 +40,7 @@ export default function MealEditor({
               type="number"
               min={0}
               value={value[f.key] as number}
+              onFocus={(e) => e.currentTarget.select()}
               onChange={(e) => onChange({ ...value, [f.key]: Number(e.target.value) || 0 })}
               className="w-16 bg-transparent text-right outline-none"
             />
