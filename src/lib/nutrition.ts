@@ -123,5 +123,4 @@ export type FoodLogEntry = ScanResult & {
 
 export type WeightEntry = {
   date: string;
-  weightKg: number;
-};
+  weightKg: number}

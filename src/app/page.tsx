@@ -63,15 +63,7 @@ export default function Home() {
   const [weightHistory, setWeightHistory] = useState<WeightEntry[]>([]);
   
 
-  // Fetch the daily meal when the dashboard loads
-  useEffect(() => {
-    fetch('/api/daily-meal')
-      .then(res => res.json())
-      .then(data => {
-        if (!data.error) setDailyMeal(data);
-      })
-      .catch(console.error);
-  }, []);
+
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageType, setImageType] = useState<string>("image/jpeg");
   const [scanning, setScanning] = useState(false);
