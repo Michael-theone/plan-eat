@@ -8,6 +8,10 @@ import type { Profile, ScanResult, FoodLogEntry, WeightEntry } from "@/lib/nutri
 import ProfileForm from "@/components/ProfileForm";
 import WeightChart from "@/components/WeightChart";
 import MealEditor from "@/components/MealEditor";
+import StreakCard from "@/components/StreakCard";
+import WeeklySummaryCard from "@/components/WeeklySummaryCard";
+import TipJar from "@/components/TipJar";
+import { calcStreak, calcWeeklySummary } from "@/lib/insights";
 interface DailyMeal {
   name: string;
   calories: number;
@@ -124,6 +128,8 @@ export default function Home() {
   const weightKg = unit === "kg" ? weight : weight * 0.453592;
   const { calories, protein, carbs, fat } = calcTargets(weightKg, profile);
   const recommended = pickMeals(calories, getDaySeed());
+  const { current: streakCurrent, longest: streakLongest } = calcStreak(foodLog, calories);
+  const weeklySummary = calcWeeklySummary(foodLog, calories);
 
   const todayEntries = foodLog.filter(isToday);
   const todayTotals = todayEntries.reduce(
@@ -385,6 +391,18 @@ export default function Home() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 pb-16 md:px-12">
+        <div className="grid gap-6 md:grid-cols-2">
+          <StreakCard current={streakCurrent} longest={streakLongest} />
+          <WeeklySummaryCard
+            days={weeklySummary.days}
+            avgCalories={weeklySummary.avgCalories}
+            avgProtein={weeklySummary.avgProtein}
+            daysHit={weeklySummary.daysHit}
+          />
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-16 md:px-12">
         <h2 className={`${display.className} text-sm font-semibold uppercase tracking-[0.2em] text-[#8C8577]`}>
           Weight trend
         </h2>
@@ -567,6 +585,10 @@ export default function Home() {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-16 md:px-12">
+        <TipJar />
       </section>
 
       <footer className="border-t-4 border-[#1A1A16] px-6 py-6 text-center text-xs text-[#8C8577] md:px-12">
