@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import type { ChangeEvent } from "react";
 import { Oswald, Inter, IBM_Plex_Mono } from "next/font/google";
-import { TAG_COLOR, pickMeals, calcTargets, DEFAULT_PROFILE } from "@/lib/nutrition";
+import { TAG_COLOR, pickMeals, calcTargets, DEFAULT_PROFILE, getDaySeed } from "@/lib/nutrition";
 import type { Profile, ScanResult, FoodLogEntry, WeightEntry } from "@/lib/nutrition";
 import ProfileForm from "@/components/ProfileForm";
 import WeightChart from "@/components/WeightChart";
@@ -61,7 +61,7 @@ export default function Home() {
   const [unit, setUnit] = useState<"kg" | "lb">("kg");
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
   const [weightHistory, setWeightHistory] = useState<WeightEntry[]>([]);
-const [dailyMeal, setDailyMeal] = useState<DailyMeal | null>(null);
+  
 
   // Fetch the daily meal when the dashboard loads
   useEffect(() => {
@@ -131,7 +131,7 @@ const [dailyMeal, setDailyMeal] = useState<DailyMeal | null>(null);
 
   const weightKg = unit === "kg" ? weight : weight * 0.453592;
   const { calories, protein, carbs, fat } = calcTargets(weightKg, profile);
-  const recommended = pickMeals(calories);
+  const recommended = pickMeals(calories, getDaySeed());
 
   const todayEntries = foodLog.filter(isToday);
   const todayTotals = todayEntries.reduce(

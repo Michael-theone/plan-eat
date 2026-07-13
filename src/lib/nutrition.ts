@@ -35,14 +35,23 @@ export const TAG_COLOR: Record<Meal["tag"], string> = {
   Snack: "#8C8577",
 };
 
-export function pickMeals(dailyCalories: number) {
+// Days since Jan 1, 1970 — changes once every 24 hours automatically,
+// no manual scheduling or hardcoding needed.
+export function getDaySeed(): number {
+  return Math.floor(Date.now() / 86400000);
+}
+
+export function pickMeals(dailyCalories: number, seed: number = 0) {
   return (Object.keys(MEAL_SPLIT) as Meal["tag"][]).map((tag) => {
     const slotTarget = dailyCalories * MEAL_SPLIT[tag];
     const options = MEALS.filter((m) => m.tag === tag);
-    const best = options.reduce((closest, m) =>
-      Math.abs(m.calories - slotTarget) < Math.abs(closest.calories - slotTarget) ? m : closest
+
+    const sorted = [...options].sort(
+      (a, b) => Math.abs(a.calories - slotTarget) - Math.abs(b.calories - slotTarget)
     );
-    return best;
+    const poolSize = Math.min(2, sorted.length);
+    const index = seed % poolSize;
+    return sorted[index];
   });
 }
 
