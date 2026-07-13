@@ -1,102 +1,101 @@
 import type { FoodLogEntry } from "./nutrition";
 
-export function dateKey(timestamp: number): string {
-  const d = new Date(timestamp);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+function dateKey(ts: number) {
+  return new Date(ts).toISOString().slice(0, 10);
 }
 
-function dailyTotals(log: FoodLogEntry[]) {
-  const map = new Map<string, { calories: number; protein: number; carbs: number; fat: number }>();
-  for (const entry of log) {
-    const key = dateKey(entry.timestamp);
-    const existing = map.get(key) ?? { calories: 0, protein: 0, carbs: 0, fat: 0 };
-    existing.calories += entry.calories;
-    existing.protein += entry.protein;
-    existing.carbs += entry.carbs;
-    existing.fat += entry.fat;
-    map.set(key, existing);
+function dailyTotals(foodLog: FoodLogEntry[]) {
+  const map = new Map<string, { calories: number; protein: number }>();
+  for (const e of foodLog) {
+    const key = dateKey(e.timestamp);
+    const cur = map.get(key) || { calories: 0, protein: 0 };
+    cur.calories += e.calories;
+    cur.protein += e.protein;
+    map.set(key, cur);
   }
   return map;
 }
 
-// A day "counts" toward a streak if you logged something and landed within
-// 20% of your calorie target — a simple rule, not a precise measure.
-export function calcStreak(log: FoodLogEntry[], calorieTarget: number) {
-  const totals = dailyTotals(log);
-  const lower = calorieTarget * 0.8;
-  const upper = calorieTarget * 1.2;
+function isHit(totalCalories: number, target: number) {
+  if (target <= 0) return false;
+  return Math.abs(totalCalories - target) <= target * 0.2;
+}
+
+export function calcStreak(foodLog: FoodLogEntry[], calorieTarget: number) {
+  const totals = dailyTotals(foodLog);
+
+  const cursor = new Date();
+  const todayKey = cursor.toISOString().slice(0, 10);
+  const todayDay = totals.get(todayKey);
+  const todayHit = todayDay ? isHit(todayDay.calories, calorieTarget) : false;
+  if (!todayHit) cursor.setDate(cursor.getDate() - 1);
 
   let current = 0;
-  const cursor = new Date();
-  if (!totals.has(dateKey(cursor.getTime()))) {
+  for (let i = 0; i < 365; i++) {
+    const key = cursor.toISOString().slice(0, 10);
+    const day = totals.get(key);
+    const hit = day ? isHit(day.calories, calorieTarget) : false;
+    if (!hit) break;
+    current++;
     cursor.setDate(cursor.getDate() - 1);
   }
-  while (true) {
-    const day = totals.get(dateKey(cursor.getTime()));
-    if (day && day.calories >= lower && day.calories <= upper) {
-      current += 1;
-      cursor.setDate(cursor.getDate() - 1);
-    } else {
-      break;
-    }
-  }
 
-  let longest = current;
-  const sortedKeys = [...totals.keys()].sort();
+  const keys = Array.from(totals.keys()).sort();
+  let longest = 0;
   let run = 0;
-  let prevKey: string | null = null;
-  for (const key of sortedKeys) {
+  let prevDate: Date | null = null;
+  for (const key of keys) {
     const day = totals.get(key)!;
-    const hit = day.calories >= lower && day.calories <= upper;
-    if (!hit) {
-      run = 0;
-      prevKey = key;
-      continue;
-    }
-    if (prevKey) {
-      const diffDays = Math.round((new Date(key).getTime() - new Date(prevKey).getTime()) / 86400000);
-      run = diffDays === 1 ? run + 1 : 1;
+    const hit = isHit(day.calories, calorieTarget);
+    const d = new Date(key);
+    if (hit) {
+      if (prevDate) {
+        const diffDays = Math.round((d.getTime() - prevDate.getTime()) / 86400000);
+        run = diffDays === 1 ? run + 1 : 1;
+      } else {
+        run = 1;
+      }
+      longest = Math.max(longest, run);
+      prevDate = d;
     } else {
-      run = 1;
+      run = 0;
+      prevDate = null;
     }
-    longest = Math.max(longest, run);
-    prevKey = key;
   }
+  longest = Math.max(longest, current);
 
   return { current, longest };
 }
 
-export type WeeklyDay = {
-  date: string;
-  calories: number;
-  protein: number;
-  hitTarget: boolean;
-};
+export function calcWeeklySummary(foodLog: FoodLogEntry[], calorieTarget: number) {
+  const totals = dailyTotals(foodLog);
+  const days: { label: string; hit: boolean }[] = [];
+  let sumCalories = 0;
+  let sumProtein = 0;
+  let daysHit = 0;
+  let loggedDays = 0;
 
-export function calcWeeklySummary(log: FoodLogEntry[], calorieTarget: number) {
-  const totals = dailyTotals(log);
-  const lower = calorieTarget * 0.8;
-  const upper = calorieTarget * 1.2;
-
-  const days: WeeklyDay[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = dateKey(d.getTime());
-    const t = totals.get(key);
-    const calories = t?.calories ?? 0;
-    days.push({
-      date: key,
-      calories,
-      protein: t?.protein ?? 0,
-      hitTarget: calories > 0 && calories >= lower && calories <= upper,
-    });
+  const cursor = new Date();
+  cursor.setDate(cursor.getDate() - 6);
+  for (let i = 0; i < 7; i++) {
+    const key = cursor.toISOString().slice(0, 10);
+    const day = totals.get(key);
+    const label = cursor.toLocaleDateString([], { weekday: "short" });
+    const hit = day ? isHit(day.calories, calorieTarget) : false;
+    days.push({ label, hit });
+    if (day) {
+      sumCalories += day.calories;
+      sumProtein += day.protein;
+      loggedDays++;
+    }
+    if (hit) daysHit++;
+    cursor.setDate(cursor.getDate() + 1);
   }
 
-  const logged = days.filter((d) => d.calories > 0);
-  const avgCalories = logged.length ? Math.round(logged.reduce((s, d) => s + d.calories, 0) / logged.length) : 0;
-  const avgProtein = logged.length ? Math.round(logged.reduce((s, d) => s + d.protein, 0) / logged.length) : 0;
-  const daysHit = days.filter((d) => d.hitTarget).length;
-
-  return { days, avgCalories, avgProtein, daysHit };
+  return {
+    days,
+    avgCalories: loggedDays > 0 ? Math.round(sumCalories / loggedDays) : 0,
+    avgProtein: loggedDays > 0 ? Math.round(sumProtein / loggedDays) : 0,
+    daysHit,
+  };
 }

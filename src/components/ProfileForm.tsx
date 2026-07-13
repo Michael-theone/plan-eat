@@ -1,93 +1,110 @@
 "use client";
 
-import { Oswald } from "next/font/google";
-import type { Profile, ActivityLevel, Sex, Goal } from "@/lib/nutrition";
+import type { Profile, Sex, Goal, ActivityLevel } from "@/lib/nutrition";
 
-const display = Oswald({ subsets: ["latin"], weight: ["600"] });
-
-const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
-  sedentary: "Sedentary (little/no exercise)",
-  light: "Light (1-3 days/week)",
-  moderate: "Moderate (3-5 days/week)",
-  active: "Active (6-7 days/week)",
-  very_active: "Very active (hard exercise daily)",
-};
-
-export default function ProfileForm({
-  profile,
-  onChange,
-}: {
+interface ProfileFormProps {
   profile: Profile;
   onChange: (p: Profile) => void;
-}) {
-  return (
-    <div className="border-2 border-[#1A1A16] p-6">
-      <h3 className={`${display.className} text-lg font-semibold`}>Your profile</h3>
-      <p className="mt-1 text-sm text-[#8C8577]">Makes your target more accurate than weight alone.</p>
+}
 
-      <div className="mt-4 grid grid-cols-2 gap-4">
-        <label className="text-xs font-semibold uppercase text-[#8C8577]">
-          Age
+const GOALS: { value: Goal; label: string }[] = [
+  { value: "lose", label: "Lose weight" },
+  { value: "maintain", label: "Maintain" },
+  { value: "gain", label: "Gain weight" },
+];
+
+const ACTIVITY: { value: ActivityLevel; label: string }[] = [
+  { value: "sedentary", label: "Sedentary — little or no exercise" },
+  { value: "light", label: "Light — 1-3 days/week" },
+  { value: "moderate", label: "Moderate — 3-5 days/week" },
+  { value: "active", label: "Active — 6-7 days/week" },
+  { value: "very_active", label: "Very active — hard exercise daily" },
+];
+
+export default function ProfileForm({ profile, onChange }: ProfileFormProps) {
+  function set<K extends keyof Profile>(key: K, value: Profile[K]) {
+    onChange({ ...profile, [key]: value });
+  }
+
+  return (
+    <div className="grid gap-5">
+      <div className="grid grid-cols-2 gap-4">
+        <label className="block">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-[#1C1B19]/50">Age</span>
           <input
             type="number"
-            min={10}
+            min={13}
             max={100}
             value={profile.age}
-            onFocus={(e) => e.currentTarget.select()}
-            onChange={(e) => onChange({ ...profile, age: Number(e.target.value) || 0 })}
-            className="mt-1 block w-full border-b-2 border-[#1A1A16] bg-transparent py-1 text-base font-medium text-[#1A1A16] outline-none focus-visible:border-[#E4572E]"
+            onFocus={(e) => e.target.select()}
+            onChange={(e) => set("age", Number(e.target.value) || 0)}
+            className="mt-1 w-full rounded-xl border border-[#1C1B19]/15 bg-white px-4 py-3 text-lg font-semibold outline-none focus:border-[#C1440E]"
           />
         </label>
-
-        <label className="text-xs font-semibold uppercase text-[#8C8577]">
-          Height (cm)
+        <label className="block">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-[#1C1B19]/50">Height (cm)</span>
           <input
             type="number"
             min={100}
             max={250}
             value={profile.heightCm}
-            onFocus={(e) => e.currentTarget.select()}
-            onChange={(e) => onChange({ ...profile, heightCm: Number(e.target.value) || 0 })}
-            className="mt-1 block w-full border-b-2 border-[#1A1A16] bg-transparent py-1 text-base font-medium text-[#1A1A16] outline-none focus-visible:border-[#E4572E]"
+            onFocus={(e) => e.target.select()}
+            onChange={(e) => set("heightCm", Number(e.target.value) || 0)}
+            className="mt-1 w-full rounded-xl border border-[#1C1B19]/15 bg-white px-4 py-3 text-lg font-semibold outline-none focus:border-[#C1440E]"
           />
-        </label>
-
-        <label className="text-xs font-semibold uppercase text-[#8C8577]">
-          Sex
-          <select
-            value={profile.sex}
-            onChange={(e) => onChange({ ...profile, sex: e.target.value as Sex })}
-            className="mt-1 block w-full border-b-2 border-[#1A1A16] bg-transparent py-1 text-base font-medium text-[#1A1A16] outline-none focus-visible:border-[#E4572E]"
-          >
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-          </select>
-        </label>
-
-        <label className="text-xs font-semibold uppercase text-[#8C8577]">
-          Goal
-          <select
-            value={profile.goal}
-            onChange={(e) => onChange({ ...profile, goal: e.target.value as Goal })}
-            className="mt-1 block w-full border-b-2 border-[#1A1A16] bg-transparent py-1 text-base font-medium text-[#1A1A16] outline-none focus-visible:border-[#E4572E]"
-          >
-            <option value="lose">Lose weight</option>
-            <option value="maintain">Maintain</option>
-            <option value="gain">Gain weight</option>
-          </select>
         </label>
       </div>
 
-      <label className="mt-4 block text-xs font-semibold uppercase text-[#8C8577]">
-        Activity level
+      <div>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-[#1C1B19]/50">Sex</span>
+        <div className="mt-1 flex gap-2">
+          {(["male", "female"] as Sex[]).map((s) => (
+            <button
+              type="button"
+              key={s}
+              onClick={() => set("sex", s)}
+              className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold capitalize transition-colors ${
+                profile.sex === s
+                  ? "border-[#1C1B19] bg-[#1C1B19] text-[#FAF8F4]"
+                  : "border-[#1C1B19]/15 bg-white text-[#1C1B19]/70"
+              }`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-[#1C1B19]/50">Goal</span>
+        <div className="mt-1 flex gap-2">
+          {GOALS.map((g) => (
+            <button
+              type="button"
+              key={g.value}
+              onClick={() => set("goal", g.value)}
+              className={`flex-1 rounded-xl border px-3 py-3 text-xs font-semibold transition-colors ${
+                profile.goal === g.value
+                  ? "border-[#C1440E] bg-[#C1440E] text-white"
+                  : "border-[#1C1B19]/15 bg-white text-[#1C1B19]/70"
+              }`}
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <label className="block">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-[#1C1B19]/50">Activity level</span>
         <select
-          value={profile.activity}
-          onChange={(e) => onChange({ ...profile, activity: e.target.value as ActivityLevel })}
-          className="mt-1 block w-full border-b-2 border-[#1A1A16] bg-transparent py-1 text-sm font-medium normal-case text-[#1A1A16] outline-none focus-visible:border-[#E4572E]"
+          value={profile.activityLevel}
+          onChange={(e) => set("activityLevel", e.target.value as ActivityLevel)}
+          className="mt-1 w-full rounded-xl border border-[#1C1B19]/15 bg-white px-4 py-3 text-sm font-medium outline-none focus:border-[#C1440E]"
         >
-          {(Object.keys(ACTIVITY_LABELS) as ActivityLevel[]).map((key) => (
-            <option key={key} value={key}>
-              {ACTIVITY_LABELS[key]}
+          {ACTIVITY.map((a) => (
+            <option key={a.value} value={a.value}>
+              {a.label}
             </option>
           ))}
         </select>

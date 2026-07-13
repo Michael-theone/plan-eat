@@ -1,52 +1,47 @@
 "use client";
 
-import { Oswald, IBM_Plex_Mono } from "next/font/google";
-import type { WeeklyDay } from "@/lib/insights";
+import { IBM_Plex_Mono } from "next/font/google";
 
-const display = Oswald({ subsets: ["latin"], weight: ["600", "700"] });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
-export default function WeeklySummaryCard({
-  days,
-  avgCalories,
-  avgProtein,
-  daysHit,
-}: {
-  days: WeeklyDay[];
+interface DayHit {
+  label: string;
+  hit: boolean;
+}
+
+interface WeeklySummaryCardProps {
+  days: DayHit[];
   avgCalories: number;
   avgProtein: number;
   daysHit: number;
-}) {
-  const dayLabel = (dateStr: string) => new Date(dateStr).toLocaleDateString([], { weekday: "short" });
+}
 
+export default function WeeklySummaryCard({ days, avgCalories, avgProtein, daysHit }: WeeklySummaryCardProps) {
   return (
-    <div className="border-4 border-[#1A1A16] p-6">
-      <h3 className={`${display.className} text-lg font-semibold`}>This week</h3>
-      <div className="mt-4 grid grid-cols-7 gap-2">
-        {days.map((d) => (
-          <div key={d.date} className="flex flex-col items-center">
-            <span className={`${mono.className} text-[10px] text-[#8C8577]`}>{dayLabel(d.date)}</span>
-            <div
-              className={`mt-1 h-10 w-full border-2 border-[#1A1A16] ${
-                d.calories === 0 ? "bg-transparent" : d.hitTarget ? "bg-[#6B8E4E]" : "bg-[#E4572E]"
-              }`}
-              title={`${d.calories} kcal`}
-            />
+    <div className="rounded-2xl border border-[#1C1B19]/10 bg-[#FAF8F4] p-6 shadow-[0_8px_30px_rgba(28,27,25,0.06)]">
+      <p className={`${mono.className} text-[10px] uppercase tracking-[0.2em] text-[#1C1B19]/50`}>This week</p>
+
+      <div className="mt-4 flex justify-between">
+        {days.map((d, i) => (
+          <div key={i} className="flex flex-col items-center gap-2">
+            <span className="text-[10px] uppercase text-[#1C1B19]/50">{d.label}</span>
+            <span className={`h-3 w-3 rounded-full ${d.hit ? "bg-[#6B7A4F]" : "bg-[#1C1B19]/10"}`} />
           </div>
         ))}
       </div>
-      <div className={`${mono.className} mt-6 grid grid-cols-3 gap-4 text-center text-sm`}>
+
+      <div className="mt-6 grid grid-cols-3 gap-3 text-center">
         <div>
-          <div className="text-xl font-bold">{avgCalories}</div>
-          <div className="text-[10px] uppercase text-[#8C8577]">Avg kcal</div>
+          <p className="text-xl font-bold">{avgCalories}</p>
+          <p className="text-[10px] uppercase text-[#1C1B19]/50">Avg kcal</p>
         </div>
         <div>
-          <div className="text-xl font-bold">{avgProtein}g</div>
-          <div className="text-[10px] uppercase text-[#8C8577]">Avg protein</div>
+          <p className="text-xl font-bold">{avgProtein}g</p>
+          <p className="text-[10px] uppercase text-[#1C1B19]/50">Avg protein</p>
         </div>
         <div>
-          <div className="text-xl font-bold">{daysHit}/7</div>
-          <div className="text-[10px] uppercase text-[#8C8577]">Days on target</div>
+          <p className="text-xl font-bold">{daysHit}/7</p>
+          <p className="text-[10px] uppercase text-[#1C1B19]/50">Days on target</p>
         </div>
       </div>
     </div>
