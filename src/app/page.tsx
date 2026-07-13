@@ -267,26 +267,8 @@ export default function Home() {
           </nav>
         </div>
       </header>
-      {/* AI Daily Meal Card */}
-  {dailyMeal && (
-    <div className="bg-gradient-to-r from-orange-50 to-red-50 p-5 rounded-xl border border-orange-100 mb-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <h2 className="text-sm font-bold text-orange-600 mb-1">
-          ✨ AI Meal of the Day
-        </h2>
-        <p className="font-bold text-lg text-zinc-900">{dailyMeal.name}</p>
-        <p className="text-sm text-zinc-600 mb-3 md:mb-0">{dailyMeal.description}</p>
-        <div className="flex gap-2 mt-2">
-          <span className="bg-white px-2 py-1 rounded-md text-xs font-bold text-zinc-700 shadow-sm">
-            {dailyMeal.calories} kcal
-          </span>
-          <span className="bg-white px-2 py-1 rounded-md text-xs font-bold text-zinc-700 shadow-sm">
-            {dailyMeal.protein}g protein
-          </span>
-        </div>
-      </div>
-    </div>
-  )}
+
+  
       <section className="mx-auto max-w-6xl px-6 pt-16 pb-12 md:px-12">
         <p className={`${mono.className} text-xs uppercase tracking-[0.2em] text-[#8C8577]`}>
           Personal nutrition, not a generic chart
