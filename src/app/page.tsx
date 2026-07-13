@@ -1,5 +1,5 @@
 "use client";
-
+import FoodSearch from "@/components/FoodSearch";
 import { useState, useEffect } from "react";
 import type { ChangeEvent } from "react";
 import { Fraunces, Inter, IBM_Plex_Mono } from "next/font/google";
@@ -13,6 +13,7 @@ import StreakCard from "@/components/StreakCard";
 import WeeklySummaryCard from "@/components/WeeklySummaryCard";
 import TipJar from "@/components/TipJar";
 import PlateRing from "@/components/PlateRing";
+
 
 const display = Fraunces({ subsets: ["latin"], weight: ["500", "600", "700", "900"], style: ["normal", "italic"] });
 const body = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
@@ -237,6 +238,36 @@ export default function Home() {
     };
     setFoodLog((prev) => [entry, ...prev]);
     setManualMeal(null);
+  }
+
+  // Handles a food picked from the FoodSearch (USDA lookup) box. It arrives
+  // with a few extra fields (brand, servingSize, sodium, ...) that FoodLogEntry
+  // doesn't need, so we only pull out the ones the rest of the app expects —
+  // same shape confirmManual and confirmScan already write to foodLog.
+  function addSearchedFood(food: {
+    name: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number;
+    sugar: number;
+  }) {
+    const entry: FoodLogEntry = {
+      name: food.name,
+      calories: food.calories,
+      protein: food.protein,
+      carbs: food.carbs,
+      fat: food.fat,
+      fiber: food.fiber,
+      sugar: food.sugar,
+      confidence: "manual",
+      id: crypto.randomUUID(),
+      image: null,
+      timestamp: Date.now(),
+      source: "manual",
+    };
+    setFoodLog((prev) => [entry, ...prev]);
   }
 
   function startEdit(entry: FoodLogEntry) {
@@ -554,6 +585,16 @@ export default function Home() {
                 </p>
               )}
             </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-6 pb-16 md:px-12">
+          <h2 className={`${display.className} text-xl font-bold`}>Search a food</h2>
+          <p className="mt-1 text-sm text-[#1C1B19]/50">
+            Look up real nutrition data instead of typing it in by hand.
+          </p>
+          <div className="mt-6 max-w-md">
+            <FoodSearch onAddFood={addSearchedFood} />
           </div>
         </section>
 
