@@ -51,10 +51,10 @@ export interface Meal {
 }
 
 export const TAG_COLOR: Record<string, string> = {
-  breakfast: "#D4A017",
-  lunch: "#C1440E",
-  dinner: "#6B7A4F",
-  snack: "#1C1B19",
+  breakfast: "#FFB627",
+  lunch: "#FF5A5F",
+  dinner: "#8BC34A",
+  snack: "#251A14",
 };
 
 const ACTIVITY_MULTIPLIER: Record<ActivityLevel, number> = {
@@ -65,17 +65,6 @@ const ACTIVITY_MULTIPLIER: Record<ActivityLevel, number> = {
   very_active: 1.9,
 };
 
-// Pulled out of calcTargets so the adaptive target calculator (in insights.ts)
-// can split a real-data-derived calorie number into macros the same way the
-// formula-based target does, instead of duplicating this logic.
-export function splitMacros(calories: number, weightKg: number, goal: Goal) {
-  const proteinPerKg = goal === "lose" ? 2.0 : goal === "gain" ? 1.8 : 1.6;
-  const protein = Math.round(weightKg * proteinPerKg);
-  const fat = Math.round((calories * 0.28) / 9);
-  const carbs = Math.max(0, Math.round((calories - protein * 4 - fat * 9) / 4));
-  return { protein, carbs, fat };
-}
-
 export function calcTargets(weightKg: number, profile: Profile) {
   const { age, heightCm, sex, goal, activityLevel } = profile;
   const bmr = 10 * weightKg + 6.25 * heightCm - 5 * age + (sex === "male" ? 5 : -161);
@@ -84,7 +73,10 @@ export function calcTargets(weightKg: number, profile: Profile) {
   if (goal === "gain") tdee += 400;
   const calories = Math.max(1200, Math.round(tdee / 10) * 10);
 
-  const { protein, carbs, fat } = splitMacros(calories, weightKg, goal);
+  const proteinPerKg = goal === "lose" ? 2.0 : goal === "gain" ? 1.8 : 1.6;
+  const protein = Math.round(weightKg * proteinPerKg);
+  const fat = Math.round((calories * 0.28) / 9);
+  const carbs = Math.max(0, Math.round((calories - protein * 4 - fat * 9) / 4));
 
   return { calories, protein, carbs, fat };
 }

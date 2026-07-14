@@ -1,69 +1,86 @@
 "use client";
 
-import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { useEffect, useState } from "react";
 
-const display = Space_Grotesk({ subsets: ["latin"], weight: ["500", "600", "700"] });
-const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"] });
-
-type RingSegment = {
+interface Segment {
   label: string;
-  progress: number;
+  value: number;
   color: string;
-  glow: string;
-};
+}
 
-export default function PlateRing({
-  segments,
-  centerValue,
-  centerLabel,
-  size = 220,
-}: {
-  segments: RingSegment[];
+interface PlateRingProps {
+  segments: Segment[];
+  progress: number; // 0-1
+  size?: number;
   centerValue: string;
   centerLabel: string;
-  size?: number;
-}) {
-  const strokeWidth = 14;
-  const gap = 10;
-  const center = size / 2;
+}
+
+export default function PlateRing({ segments, progress, size = 220, centerValue, centerLabel }: PlateRingProps) {
+  const [animated, setAnimated] = useState(0);
+
+  useEffect(() => {
+    const t = setTimeout(() => setAnimated(progress), 150);
+    return () => clearTimeout(t);
+  }, [progress]);
+
+  const outerR = size / 2 - 12;
+  const innerR = size / 2 - 38;
+  const outerCirc = 2 * Math.PI * outerR;
+  const innerCirc = 2 * Math.PI * innerR;
+  const total = segments.reduce((s, seg) => s + seg.value, 0) || 1;
+  const gap = outerCirc * 0.015;
+
+  let cumulative = 0;
+  const arcs = segments.map((seg) => {
+    const fraction = seg.value / total;
+    const length = Math.max(0, fraction * outerCirc - gap);
+    const offset = -cumulative;
+    cumulative += fraction * outerCirc;
+    return { ...seg, length, offset };
+  });
 
   return (
-    <div className="relative" style={{ width: size, height: size }}>
+    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <defs>
-          {segments.map((s, i) => (
-            <linearGradient key={s.label} id={`ring-grad-${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={s.color} />
-              <stop offset="100%" stopColor={s.glow} />
-            </linearGradient>
-          ))}
-        </defs>
-        {segments.map((s, i) => {
-          const radius = center - strokeWidth / 2 - i * (strokeWidth + gap);
-          const circumference = 2 * Math.PI * radius;
-          const clamped = Math.min(1, Math.max(0, s.progress));
-          return (
-            <g key={s.label}>
-              <circle cx={center} cy={center} r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={strokeWidth} />
-              <circle
-                cx={center}
-                cy={center}
-                r={radius}
-                fill="none"
-                stroke={`url(#ring-grad-${i})`}
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                strokeDashoffset={circumference * (1 - clamped)}
-                style={{ transition: "stroke-dashoffset 0.8s ease-out", filter: `drop-shadow(0 0 6px ${s.color}66)` }}
-              />
-            </g>
-          );
-        })}
+        <circle cx={size / 2} cy={size / 2} r={outerR} fill="none" stroke="#251A14" strokeOpacity={0.08} strokeWidth={10} />
+        {arcs.map((a) => (
+          <circle
+            key={a.label}
+            cx={size / 2}
+            cy={size / 2}
+            r={outerR}
+            fill="none"
+            stroke={a.color}
+            strokeWidth={10}
+            strokeLinecap="round"
+            strokeDasharray={`${a.length} ${outerCirc - a.length}`}
+            strokeDashoffset={a.offset}
+          />
+        ))}
+
+        <circle cx={size / 2} cy={size / 2} r={innerR} fill="none" stroke="#251A14" strokeOpacity={0.08} strokeWidth={16} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={innerR}
+          fill="none"
+          stroke="#251A14"
+          strokeWidth={16}
+          strokeLinecap="round"
+          strokeDasharray={innerCirc}
+          strokeDashoffset={innerCirc * (1 - Math.min(1, animated))}
+          style={{ transition: "stroke-dashoffset 1.1s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
+        />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`${display.className} text-3xl font-bold text-[#F5F5F3]`}>{centerValue}</span>
-        <span className={`${mono.className} mt-1 text-[10px] uppercase tracking-[0.15em] text-[#F5F5F3]/45`}>
+      <div className="absolute flex flex-col items-center">
+        <span className="text-4xl font-black leading-none" style={{ color: "#251A14" }}>
+          {centerValue}
+        </span>
+        <span
+          className="mt-1 text-center text-[10px] font-bold uppercase tracking-[0.15em]"
+          style={{ color: "#251A14", opacity: 0.5 }}
+        >
           {centerLabel}
         </span>
       </div>

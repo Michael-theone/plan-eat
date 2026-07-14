@@ -1,49 +1,53 @@
 "use client";
 
-import { IBM_Plex_Mono } from "next/font/google";
 import type { ScanResult } from "@/lib/nutrition";
 
-const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+interface MealEditorProps {
+  value: Omit<ScanResult, "confidence">;
+  onChange: (v: Omit<ScanResult, "confidence">) => void;
+}
 
-type Editable = Omit<ScanResult, "confidence">;
+const FIELDS: { key: keyof Omit<ScanResult, "confidence" | "name">; label: string; suffix: string }[] = [
+  { key: "calories", label: "Calories", suffix: "kcal" },
+  { key: "protein", label: "Protein", suffix: "g" },
+  { key: "carbs", label: "Carbs", suffix: "g" },
+  { key: "fiber", label: "Fiber", suffix: "g" },
+  { key: "sugar", label: "Sugar", suffix: "g" },
+  { key: "fat", label: "Fat", suffix: "g" },
+];
 
-export default function MealEditor({
-  value,
-  onChange,
-}: {
-  value: Editable;
-  onChange: (v: Editable) => void;
-}) {
-  const fields: { key: keyof Editable; label: string }[] = [
-    { key: "calories", label: "Calories" },
-    { key: "protein", label: "Protein" },
-    { key: "carbs", label: "Carbs" },
-    { key: "fiber", label: "Fiber" },
-    { key: "sugar", label: "Sugar" },
-    { key: "fat", label: "Fat" },
-  ];
+export default function MealEditor({ value, onChange }: MealEditorProps) {
+  function set<K extends keyof Omit<ScanResult, "confidence">>(key: K, v: Omit<ScanResult, "confidence">[K]) {
+    onChange({ ...value, [key]: v });
+  }
 
   return (
-    <div className={mono.className}>
-      <input
-        type="text"
-        value={value.name}
-        onChange={(e) => onChange({ ...value, name: e.target.value })}
-        placeholder="Meal name"
-        className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-lg font-semibold text-[#F5F5F3] outline-none focus:border-[#8B5CF6]"
-      />
-      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-        {fields.map((f) => (
-          <label key={f.key} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[#F5F5F3]/80">
-            <span>{f.label}</span>
-            <input
-              type="number"
-              min={0}
-              value={value[f.key] as number}
-              onFocus={(e) => e.currentTarget.select()}
-              onChange={(e) => onChange({ ...value, [f.key]: Number(e.target.value) || 0 })}
-              className="w-16 bg-transparent text-right text-[#F5F5F3] outline-none"
-            />
+    <div className="grid gap-3">
+      <label className="block">
+        <span className="text-[11px] font-bold uppercase tracking-wide text-[#251A14]/60">Meal name</span>
+        <input
+          type="text"
+          value={value.name}
+          onChange={(e) => set("name", e.target.value)}
+          placeholder="e.g. Grilled chicken bowl"
+          className="mt-1 w-full rounded-2xl border-[3px] border-[#251A14] bg-white px-3 py-2 text-sm font-bold text-[#251A14] outline-none"
+        />
+      </label>
+      <div className="grid grid-cols-2 gap-3">
+        {FIELDS.map((f) => (
+          <label key={f.key} className="block">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-[#251A14]/60">{f.label}</span>
+            <div className="mt-1 flex items-center rounded-2xl border-[3px] border-[#251A14] bg-white px-3 py-2">
+              <input
+                type="number"
+                min={0}
+                value={value[f.key]}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => set(f.key, Number(e.target.value) || 0)}
+                className="w-full text-sm font-bold text-[#251A14] outline-none"
+              />
+              <span className="text-[10px] font-bold uppercase text-[#251A14]/40">{f.suffix}</span>
+            </div>
           </label>
         ))}
       </div>

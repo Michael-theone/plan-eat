@@ -1,8 +1,8 @@
 "use client";
-import FoodSearch from "@/components/FoodSearch";
+
 import { useState, useEffect } from "react";
 import type { ChangeEvent } from "react";
-import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
+import { Unbounded, Plus_Jakarta_Sans, IBM_Plex_Mono } from "next/font/google";
 import { TAG_COLOR, pickMeals, calcTargets, DEFAULT_PROFILE, getDaySeed } from "@/lib/nutrition";
 import type { Profile, ScanResult, FoodLogEntry, WeightEntry } from "@/lib/nutrition";
 import { calcStreak, calcWeeklySummary } from "@/lib/insights";
@@ -13,10 +13,17 @@ import StreakCard from "@/components/StreakCard";
 import WeeklySummaryCard from "@/components/WeeklySummaryCard";
 import TipJar from "@/components/TipJar";
 import PlateRing from "@/components/PlateRing";
+import FoodSearch from "@/components/FoodSearch";
 
-const display = Space_Grotesk({ subsets: ["latin"], weight: ["500", "600", "700"] });
-const body = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
+const display = Unbounded({ subsets: ["latin"], weight: ["700", "800", "900"] });
+const body = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"] });
+
+const CARD = "rounded-3xl border-[3px] border-[#251A14] bg-white shadow-[4px_4px_0_0_#251A14]";
+const BTN_PRIMARY =
+  "rounded-full border-[3px] border-[#251A14] bg-[#FF5A5F] px-7 py-3.5 text-sm font-bold text-[#251A14] shadow-[4px_4px_0_0_#251A14] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#251A14] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none";
+const BTN_SECONDARY =
+  "rounded-full border-[3px] border-[#251A14] bg-white px-6 py-3.5 text-sm font-bold text-[#251A14] shadow-[4px_4px_0_0_#251A14] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#251A14]";
 
 function resizeImage(file: File, maxWidth = 600, quality = 0.7): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -145,12 +152,6 @@ export default function Home() {
     }),
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
-
-  const ringSegments = [
-    { label: "Protein", progress: protein > 0 ? todayTotals.protein / protein : 0, color: "#8B5CF6", glow: "#C4B5FD" },
-    { label: "Carbs", progress: carbs > 0 ? todayTotals.carbs / carbs : 0, color: "#F59E0B", glow: "#FCD34D" },
-    { label: "Fat", progress: fat > 0 ? todayTotals.fat / fat : 0, color: "#14B8A6", glow: "#5EEAD4" },
-  ];
 
   function logWeightToday() {
     const date = todayDateStr();
@@ -300,21 +301,27 @@ export default function Home() {
     setFoodLog((prev) => prev.filter((e) => e.id !== id));
   }
 
+  const macroSegments = [
+    { label: "Protein", value: protein * 4, color: "#FF5A5F" },
+    { label: "Carbs", value: carbs * 4, color: "#FFB627" },
+    { label: "Fat", value: fat * 9, color: "#8BC34A" },
+  ];
+
   return (
-    <div className={`${body.className} min-h-screen bg-[#0A0B0D] text-[#F5F5F3]`}>
+    <div className={`${body.className} min-h-screen bg-[#FFF6E9] text-[#251A14]`}>
       <header className="px-6 py-6 md:px-12">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <span className={`${display.className} text-2xl font-bold tracking-tight`}>
-            PLATE<span className="text-[#FF5470]">.</span>
+          <span className={`${display.className} text-xl font-extrabold tracking-tight`}>
+            PLATE<span className="text-[#FF5A5F]">.</span>
           </span>
           {onboarded && (
-            <nav className="flex items-center gap-4 text-xs font-medium uppercase tracking-wide sm:gap-8 sm:text-sm">
-              <a href="#targets" className="hidden text-[#F5F5F3]/70 hover:text-[#F5F5F3] sm:inline">Targets</a>
-              <a href="#picks" className="hidden text-[#F5F5F3]/70 hover:text-[#F5F5F3] sm:inline">Meals</a>
-              <a href="#log" className="hidden text-[#F5F5F3]/70 hover:text-[#F5F5F3] sm:inline">Log</a>
+            <nav className="flex items-center gap-3 text-xs font-bold uppercase tracking-wide sm:gap-6">
+              <a href="#targets" className="hidden hover:text-[#FF5A5F] sm:inline">Targets</a>
+              <a href="#picks" className="hidden hover:text-[#FF5A5F] sm:inline">Meals</a>
+              <a href="#log" className="hidden hover:text-[#FF5A5F] sm:inline">Log</a>
               <button
                 onClick={() => setEditingProfile(true)}
-                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-semibold text-[#F5F5F3]/80 hover:border-[#8B5CF6] hover:text-[#F5F5F3]"
+                className="rounded-full border-[3px] border-[#251A14] bg-white px-4 py-2 text-[11px] font-bold shadow-[3px_3px_0_0_#251A14] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#251A14]"
               >
                 Edit details
               </button>
@@ -326,41 +333,39 @@ export default function Home() {
       {/* Hero */}
       <section className="relative mx-auto max-w-6xl overflow-hidden px-6 pb-16 pt-8 md:px-12">
         <div
-          className="pointer-events-none absolute -top-32 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
-          style={{ background: "radial-gradient(circle, #8B5CF6, transparent 70%)" }}
+          className="pointer-events-none absolute -top-24 left-1/2 h-[380px] w-[380px] -translate-x-1/2 rounded-full opacity-30 blur-3xl"
+          style={{ background: "radial-gradient(circle, #FFB627, transparent 70%)" }}
         />
         <div className="relative grid items-center gap-12 md:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <p className={`${mono.className} text-xs uppercase tracking-[0.2em] text-[#F5F5F3]/45`}>
+            <p className={`${mono.className} text-xs font-semibold uppercase tracking-[0.2em] text-[#251A14]/50`}>
               Personal nutrition, not a generic chart
             </p>
-            <h1 className={`${display.className} mt-4 max-w-xl text-4xl font-bold leading-[1.05] md:text-6xl`}>
-              Know exactly what&apos;s on your <span className="bg-gradient-to-r from-[#8B5CF6] to-[#FF5470] bg-clip-text text-transparent">plate</span>.
+            <h1 className={`${display.className} mt-4 max-w-xl text-4xl font-extrabold leading-[1.05] md:text-6xl`}>
+              Know exactly what&apos;s on your <span className="text-[#FF5A5F]">plate</span>.
             </h1>
-            <p className="mt-5 max-w-md text-lg text-[#F5F5F3]/60">
+            <p className="mt-5 max-w-md text-lg font-medium text-[#251A14]/70">
               Log your weight, scan a meal, and get targets built around your body — updated as you go.
             </p>
-           {!onboarded && (
-              <a
-                href="#get-started"
-                className="mt-8 inline-block rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#FF5470] px-7 py-3.5 text-sm font-semibold text-white transition-transform hover:scale-105"
-              >
+            {!onboarded && (
+              <a href="#get-started" className={`${BTN_PRIMARY} mt-8 inline-block`}>
                 Get started
               </a>
             )}
           </div>
           <div className="flex justify-center">
-            <div className="rounded-3xl border border-white/10 bg-[#14161A] p-8">
+            <div className={`${CARD} p-8`}>
               <PlateRing
                 segments={[
-                  { label: "Protein", progress: 0.88, color: "#8B5CF6", glow: "#C4B5FD" },
-                  { label: "Carbs", progress: 0.72, color: "#F59E0B", glow: "#FCD34D" },
-                  { label: "Fat", progress: 0.65, color: "#14B8A6", glow: "#5EEAD4" },
+                  { label: "Protein", value: 30, color: "#FF5A5F" },
+                  { label: "Carbs", value: 45, color: "#FFB627" },
+                  { label: "Fat", value: 25, color: "#8BC34A" },
                 ]}
+                progress={0.62}
                 centerValue="1,580"
                 centerLabel="of 2,540 kcal"
               />
-              <p className={`${mono.className} mt-4 text-center text-[10px] uppercase tracking-[0.15em] text-[#F5F5F3]/35`}>
+              <p className={`${mono.className} mt-4 text-center text-[10px] font-semibold uppercase tracking-[0.15em] text-[#251A14]/40`}>
                 Example day
               </p>
             </div>
@@ -375,25 +380,25 @@ export default function Home() {
             formOpen ? "max-h-[3000px] opacity-100" : "max-h-0 opacity-0"
           }`}
         >
-          <div className="mb-16 rounded-3xl border border-white/10 bg-[#14161A] p-8 md:p-12">
-            <h2 className={`${display.className} text-2xl font-bold`}>
+          <div className={`${CARD} mb-16 p-8 md:p-12`}>
+            <h2 className={`${display.className} text-2xl font-extrabold`}>
               {onboarded ? "Update your details" : "Let's build your targets"}
             </h2>
-            <p className="mt-1 text-sm text-[#F5F5F3]/50">
+            <p className="mt-1 text-sm font-medium text-[#251A14]/60">
               Takes about a minute — this drives every number below.
             </p>
 
             <div className="mt-8 grid gap-10 md:grid-cols-2">
               <div>
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-[#F5F5F3]/45">Weight</span>
-                <div className="mt-2 flex items-end gap-3">
+                <span className="text-[11px] font-bold uppercase tracking-wide text-[#251A14]/60">Weight</span>
+                <div className="mt-1 flex items-end gap-3">
                   <input
                     type="number"
                     min={0}
                     value={weight}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) => setWeight(Number(e.target.value) || 0)}
-                    className={`${mono.className} w-32 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-4xl font-medium text-[#F5F5F3] outline-none focus:border-[#8B5CF6]`}
+                    className={`${mono.className} w-32 rounded-2xl border-[3px] border-[#251A14] bg-white px-3 py-2 text-4xl font-bold text-[#251A14] outline-none`}
                   />
                   <div className="mb-1 flex gap-1">
                     {(["kg", "lb"] as const).map((u) => (
@@ -401,10 +406,8 @@ export default function Home() {
                         key={u}
                         type="button"
                         onClick={() => setUnit(u)}
-                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase transition-colors ${
-                          unit === u
-                            ? "border-transparent bg-gradient-to-r from-[#8B5CF6] to-[#FF5470] text-white"
-                            : "border-white/10 bg-white/5 text-[#F5F5F3]/60"
+                        className={`rounded-full border-[3px] border-[#251A14] px-3 py-1.5 text-xs font-bold uppercase transition-colors ${
+                          unit === u ? "bg-[#251A14] text-[#FFF6E9]" : "bg-white text-[#251A14]"
                         }`}
                       >
                         {u}
@@ -418,17 +421,11 @@ export default function Home() {
             </div>
 
             <div className="mt-8 flex gap-3">
-              <button
-                onClick={handleShowTargets}
-                className="rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#FF5470] px-7 py-3.5 text-sm font-semibold text-white transition-transform hover:scale-105"
-              >
+              <button onClick={handleShowTargets} className={BTN_PRIMARY}>
                 {onboarded ? "Save changes" : "Show my targets"}
               </button>
               {onboarded && (
-                <button
-                  onClick={() => setEditingProfile(false)}
-                  className="rounded-full border border-white/10 px-6 py-3.5 text-sm font-semibold text-[#F5F5F3]/70 hover:border-white/30"
-                >
+                <button onClick={() => setEditingProfile(false)} className={BTN_SECONDARY}>
                   Cancel
                 </button>
               )}
@@ -445,45 +442,46 @@ export default function Home() {
       >
         <section id="targets" className="mx-auto max-w-6xl px-6 pb-16 md:px-12">
           <div className="grid gap-8 md:grid-cols-[0.9fr_1.1fr]">
-            <div className="flex flex-col items-center justify-center rounded-3xl border border-white/10 bg-[#14161A] p-8 text-center">
+            <div className={`${CARD} flex flex-col items-center justify-center p-8 text-center`}>
               <PlateRing
-                segments={ringSegments}
+                segments={macroSegments}
+                progress={calories > 0 ? todayTotals.calories / calories : 0}
                 centerValue={String(todayTotals.calories)}
                 centerLabel={`of ${calories} kcal`}
               />
-              <div className="mt-6 flex gap-4 text-xs text-[#F5F5F3]/70">
-                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#8B5CF6]" /> Protein</span>
-                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#F59E0B]" /> Carbs</span>
-                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#14B8A6]" /> Fat</span>
+              <div className="mt-6 flex gap-4 text-xs font-bold">
+                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#FF5A5F]" /> Protein</span>
+                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#FFB627]" /> Carbs</span>
+                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#8BC34A]" /> Fat</span>
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-[#14161A] p-8">
-              <h2 className={`${display.className} text-xl font-bold`}>Today&apos;s progress</h2>
-              <p className="mt-1 text-sm text-[#F5F5F3]/50">
+            <div className={`${CARD} p-8`}>
+              <h2 className={`${display.className} text-xl font-extrabold`}>Today&apos;s progress</h2>
+              <p className="mt-1 text-sm font-medium text-[#251A14]/50">
                 {todayEntries.length === 0
                   ? "Nothing logged yet — scan or add a meal below to start tracking."
                   : `Based on ${todayEntries.length} meal${todayEntries.length === 1 ? "" : "s"} logged today.`}
               </p>
               <div className="mt-6 space-y-5">
                 {[
-                  { label: "Calories", value: todayTotals.calories, target: calories, color: "#FF5470" },
-                  { label: "Protein", value: todayTotals.protein, target: protein, color: "#8B5CF6" },
-                  { label: "Carbs", value: todayTotals.carbs, target: carbs, color: "#F59E0B" },
-                  { label: "Fat", value: todayTotals.fat, target: fat, color: "#14B8A6" },
+                  { label: "Calories", value: todayTotals.calories, target: calories, color: "#251A14" },
+                  { label: "Protein", value: todayTotals.protein, target: protein, color: "#FF5A5F" },
+                  { label: "Carbs", value: todayTotals.carbs, target: carbs, color: "#FFB627" },
+                  { label: "Fat", value: todayTotals.fat, target: fat, color: "#8BC34A" },
                 ].map((m) => {
                   const pct = m.target > 0 ? Math.min(100, Math.round((m.value / m.target) * 100)) : 0;
                   return (
                     <div key={m.label}>
                       <div className="flex items-baseline justify-between">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-[#F5F5F3]/80">{m.label}</span>
-                        <span className={`${mono.className} text-xs text-[#F5F5F3]/45`}>
+                        <span className="text-xs font-bold uppercase tracking-wide">{m.label}</span>
+                        <span className={`${mono.className} text-xs font-semibold text-[#251A14]/50`}>
                           {m.value} / {m.target}
                         </span>
                       </div>
-                      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/8">
+                      <div className="mt-2 h-3 w-full overflow-hidden rounded-full border-2 border-[#251A14] bg-white">
                         <div
-                          className="h-full rounded-full transition-all duration-700"
+                          className="h-full transition-all duration-700"
                           style={{ width: `${pct}%`, backgroundColor: m.color }}
                         />
                       </div>
@@ -508,20 +506,20 @@ export default function Home() {
         </section>
 
         <section id="picks" className="mx-auto max-w-6xl px-6 pb-16 md:px-12">
-          <h2 className={`${display.className} text-xl font-bold`}>Today&apos;s picks</h2>
-          <p className="mt-1 text-sm text-[#F5F5F3]/50">Rotated daily, built around your {calories} kcal target.</p>
+          <h2 className={`${display.className} text-xl font-extrabold`}>Today&apos;s picks</h2>
+          <p className="mt-1 text-sm font-medium text-[#251A14]/50">Rotated daily, built around your {calories} kcal target.</p>
           <div className="mt-6 grid gap-6 md:grid-cols-4">
             {recommended.map((meal) => (
-              <div key={meal.tag} className="rounded-2xl border border-white/10 bg-[#14161A] p-5">
+              <div key={meal.tag} className={`${CARD} p-5`}>
                 <span
-                  className="inline-block rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white"
-                  style={{ backgroundColor: TAG_COLOR[meal.tag] }}
+                  className="inline-block rounded-full border-2 border-[#251A14] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#251A14]"
+                  style={{ backgroundColor: TAG_COLOR[meal.tag] === "#251A14" ? "#FFF6E9" : TAG_COLOR[meal.tag] }}
                 >
                   {meal.tag}
                 </span>
-                <h3 className={`${display.className} mt-3 text-base font-semibold leading-tight`}>{meal.name}</h3>
-                <div className={`${mono.className} mt-3 space-y-1 text-xs text-[#F5F5F3]/55`}>
-                  <div className="flex justify-between"><span>Calories</span><span className="font-semibold text-[#F5F5F3]">{meal.calories}</span></div>
+                <h3 className={`${display.className} mt-3 text-base font-bold leading-tight`}>{meal.name}</h3>
+                <div className={`${mono.className} mt-3 space-y-1 text-xs font-medium text-[#251A14]/60`}>
+                  <div className="flex justify-between"><span>Calories</span><span className="font-bold text-[#251A14]">{meal.calories}</span></div>
                   <div className="flex justify-between"><span>Protein</span><span>{meal.protein}g</span></div>
                   <div className="flex justify-between"><span>Carbs</span><span>{meal.carbs}g</span></div>
                   <div className="flex justify-between"><span>Fat</span><span>{meal.fat}g</span></div>
@@ -532,16 +530,16 @@ export default function Home() {
         </section>
 
         <section className="mx-auto max-w-6xl px-6 pb-16 md:px-12">
-          <h2 className={`${display.className} text-xl font-bold`}>Scan a meal</h2>
+          <h2 className={`${display.className} text-xl font-extrabold`}>Scan a meal</h2>
           <div className="mt-6 grid gap-8 md:grid-cols-2">
-            <div className="rounded-2xl border-2 border-dashed border-white/15 bg-[#14161A] p-8 text-center">
+            <div className="rounded-3xl border-[3px] border-dashed border-[#251A14] bg-white p-8 text-center">
               {imagePreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={imagePreview} alt="Selected meal" className="mx-auto max-h-56 rounded-xl object-cover" />
+                <img src={imagePreview} alt="Selected meal" className="mx-auto max-h-56 rounded-2xl border-[3px] border-[#251A14] object-cover" />
               ) : (
-                <p className="text-sm text-[#F5F5F3]/45">Upload a photo of your meal</p>
+                <p className="text-sm font-semibold text-[#251A14]/50">Upload a photo of your meal</p>
               )}
-              <label className="mt-4 inline-block cursor-pointer rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-xs font-semibold uppercase tracking-wide text-[#F5F5F3]/80 hover:border-[#8B5CF6] hover:text-[#F5F5F3]">
+              <label className={`${BTN_SECONDARY} mt-4 inline-block cursor-pointer text-xs uppercase tracking-wide`}>
                 {imagePreview ? "Choose a different photo" : "Choose photo"}
                 <input type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
               </label>
@@ -549,32 +547,32 @@ export default function Home() {
                 <button
                   onClick={handleScan}
                   disabled={scanning}
-                  className="mt-4 block w-full rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#FF5470] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-white disabled:opacity-50"
+                  className={`${BTN_PRIMARY} mt-4 block w-full text-xs uppercase tracking-wide disabled:opacity-50`}
                 >
                   {scanning ? "Analyzing..." : "Scan meal"}
                 </button>
               )}
-              {scanError && <p className="mt-3 text-xs text-[#FF5470]">{scanError}</p>}
+              {scanError && <p className="mt-3 text-xs font-semibold text-[#FF5A5F]">{scanError}</p>}
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-[#14161A] p-6">
+            <div className={`${CARD} p-6`}>
               {pendingMeal ? (
                 <>
-                  <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-[#F5F5F3]/45">
+                  <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-[#251A14]/50">
                     Review before logging · confidence: {pendingMeal.confidence}
                   </p>
                   <MealEditor value={pendingMeal} onChange={(v) => setPendingMeal({ ...pendingMeal, ...v })} />
                   <div className="mt-4 flex gap-2">
-                    <button onClick={confirmScan} className="flex-1 rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#FF5470] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-white">
+                    <button onClick={confirmScan} className={`${BTN_PRIMARY} flex-1 text-xs uppercase tracking-wide`}>
                       Log this meal
                     </button>
-                    <button onClick={discardScan} className="rounded-full border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-[#F5F5F3]/70">
+                    <button onClick={discardScan} className={`${BTN_SECONDARY} text-xs uppercase tracking-wide`}>
                       Discard
                     </button>
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-[#F5F5F3]/45">
+                <p className="text-sm font-medium text-[#251A14]/50">
                   Your scan results will show up here for you to review before logging.
                 </p>
               )}
@@ -583,8 +581,8 @@ export default function Home() {
         </section>
 
         <section className="mx-auto max-w-6xl px-6 pb-16 md:px-12">
-          <h2 className={`${display.className} text-xl font-bold`}>Search a food</h2>
-          <p className="mt-1 text-sm text-[#F5F5F3]/50">
+          <h2 className={`${display.className} text-xl font-extrabold`}>Search a food</h2>
+          <p className="mt-1 text-sm font-medium text-[#251A14]/50">
             Look up real nutrition data instead of typing it in by hand.
           </p>
           <div className="mt-6 max-w-md">
@@ -594,25 +592,25 @@ export default function Home() {
 
         <section className="mx-auto max-w-6xl px-6 pb-16 md:px-12">
           <div className="flex items-center justify-between">
-            <h2 className={`${display.className} text-xl font-bold`}>Add a meal manually</h2>
+            <h2 className={`${display.className} text-xl font-extrabold`}>Add a meal manually</h2>
             {!manualMeal && (
-              <button onClick={startManualEntry} className="text-xs font-semibold uppercase tracking-wide text-[#F5F5F3]/50 hover:text-[#F5F5F3]">
+              <button onClick={startManualEntry} className="text-xs font-bold uppercase tracking-wide text-[#251A14]/50 hover:text-[#FF5A5F]">
                 + Add meal
               </button>
             )}
           </div>
           {manualMeal && (
-            <div className="mt-6 max-w-md rounded-2xl border border-white/10 bg-[#14161A] p-6">
+            <div className={`${CARD} mt-6 max-w-md p-6`}>
               <MealEditor value={manualMeal} onChange={setManualMeal} />
               <div className="mt-4 flex gap-2">
                 <button
                   onClick={confirmManual}
                   disabled={!manualMeal.name.trim()}
-                  className="flex-1 rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#FF5470] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-white disabled:opacity-50"
+                  className={`${BTN_PRIMARY} flex-1 text-xs uppercase tracking-wide disabled:opacity-50`}
                 >
                   Add to log
                 </button>
-                <button onClick={() => setManualMeal(null)} className="rounded-full border border-white/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-[#F5F5F3]/70">
+                <button onClick={() => setManualMeal(null)} className={`${BTN_SECONDARY} text-xs uppercase tracking-wide`}>
                   Cancel
                 </button>
               </div>
@@ -622,25 +620,25 @@ export default function Home() {
 
         <section id="log" className="mx-auto max-w-6xl px-6 pb-16 md:px-12">
           <div className="flex items-center justify-between">
-            <h2 className={`${display.className} text-xl font-bold`}>Food log</h2>
+            <h2 className={`${display.className} text-xl font-extrabold`}>Food log</h2>
             {foodLog.length > 0 && (
-              <button onClick={() => setFoodLog([])} className="text-xs font-semibold uppercase tracking-wide text-[#F5F5F3]/50 hover:text-[#F5F5F3]">
+              <button onClick={() => setFoodLog([])} className="text-xs font-bold uppercase tracking-wide text-[#251A14]/50 hover:text-[#FF5A5F]">
                 Clear all
               </button>
             )}
           </div>
 
           {foodLog.length === 0 ? (
-            <p className="mt-6 text-sm text-[#F5F5F3]/45">No meals logged yet — scan or add something above to get started.</p>
+            <p className="mt-6 text-sm font-medium text-[#251A14]/50">No meals logged yet — scan or add something above to get started.</p>
           ) : (
             <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {foodLog.map((entry) => (
-                <div key={entry.id} className="overflow-hidden rounded-2xl border border-white/10 bg-[#14161A]">
+                <div key={entry.id} className={`${CARD} overflow-hidden`}>
                   {entry.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={entry.image} alt={entry.name} className="h-40 w-full object-cover" />
+                    <img src={entry.image} alt={entry.name} className="h-40 w-full border-b-[3px] border-[#251A14] object-cover" />
                   ) : (
-                    <div className="flex h-40 w-full items-center justify-center bg-white/5 text-xs uppercase tracking-wide text-[#F5F5F3]/35">
+                    <div className="flex h-40 w-full items-center justify-center border-b-[3px] border-[#251A14] bg-[#FFF6E9] text-xs font-bold uppercase tracking-wide text-[#251A14]/40">
                       Manually logged
                     </div>
                   )}
@@ -649,10 +647,10 @@ export default function Home() {
                       <>
                         <MealEditor value={editDraft} onChange={setEditDraft} />
                         <div className="mt-3 flex gap-2">
-                          <button onClick={saveEdit} className="flex-1 rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#FF5470] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white">
+                          <button onClick={saveEdit} className={`${BTN_PRIMARY} flex-1 py-2 text-[10px] uppercase tracking-wide`}>
                             Save
                           </button>
-                          <button onClick={cancelEdit} className="rounded-full border border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[#F5F5F3]/70">
+                          <button onClick={cancelEdit} className={`${BTN_SECONDARY} py-2 text-[10px] uppercase tracking-wide`}>
                             Cancel
                           </button>
                         </div>
@@ -660,17 +658,17 @@ export default function Home() {
                     ) : (
                       <>
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className={`${display.className} text-base font-semibold leading-tight`}>{entry.name}</h3>
+                          <h3 className={`${display.className} text-base font-bold leading-tight`}>{entry.name}</h3>
                           <div className="flex shrink-0 gap-2">
-                            <button onClick={() => startEdit(entry)} aria-label="Edit entry" className="text-[#F5F5F3]/35 hover:text-[#F5F5F3]">✎</button>
-                            <button onClick={() => deleteEntry(entry.id)} aria-label="Delete entry" className="text-[#F5F5F3]/35 hover:text-[#FF5470]">×</button>
+                            <button onClick={() => startEdit(entry)} aria-label="Edit entry" className="text-[#251A14]/40 hover:text-[#FF5A5F]">✎</button>
+                            <button onClick={() => deleteEntry(entry.id)} aria-label="Delete entry" className="text-[#251A14]/40 hover:text-[#FF5A5F]">×</button>
                           </div>
                         </div>
-                        <p className={`${mono.className} mt-1 text-[10px] text-[#F5F5F3]/35`}>
+                        <p className={`${mono.className} mt-1 text-[10px] font-semibold text-[#251A14]/40`}>
                           {new Date(entry.timestamp).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                         </p>
-                        <div className={`${mono.className} mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-[#F5F5F3]/55`}>
-                          <div className="flex justify-between"><span>Calories</span><span className="font-semibold text-[#F5F5F3]">{entry.calories}</span></div>
+                        <div className={`${mono.className} mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs font-medium text-[#251A14]/60`}>
+                          <div className="flex justify-between"><span>Calories</span><span className="font-bold text-[#251A14]">{entry.calories}</span></div>
                           <div className="flex justify-between"><span>Protein</span><span>{entry.protein}g</span></div>
                           <div className="flex justify-between"><span>Carbs</span><span>{entry.carbs}g</span></div>
                           <div className="flex justify-between"><span>Fat</span><span>{entry.fat}g</span></div>
@@ -687,7 +685,7 @@ export default function Home() {
         </section>
 
         <section className="mx-auto max-w-6xl px-6 pb-16 md:px-12">
-          <h2 className={`${display.className} text-xl font-bold`}>Weight trend</h2>
+          <h2 className={`${display.className} text-xl font-extrabold`}>Weight trend</h2>
           <div className="mt-6">
             <WeightChart history={weightHistory} unit={unit} />
           </div>
@@ -698,7 +696,7 @@ export default function Home() {
         </section>
       </div>
 
-      <footer className="px-6 py-8 text-center text-xs text-[#F5F5F3]/35 md:px-12">
+      <footer className="px-6 py-8 text-center text-xs font-semibold text-[#251A14]/40 md:px-12">
         Built one feature at a time.
       </footer>
     </div>
