@@ -1,106 +1,130 @@
-// app/api/food-search/route.js
+// components/FoodSearch.jsx
 //
-// Next.js App Router API route — proxies food search to USDA FoodData Central
-// so your API key never reaches the browser, and caches repeat queries.
-//
-// SETUP:
-// 1. Get a free key (instant, no approval wait): https://fdc.nal.usda.gov/api-key-signup.html
-// 2. Add to .env.local:      USDA_API_KEY=your_key_here
-// 3. Add the same var to your Vercel project's Environment Variables (Settings > Environment Variables)
-//
-// If your project uses the Pages Router instead of App Router, put this logic in
-// pages/api/food-search.js as:
-//   export default async function handler(req, res) {
-//     const query = req.query.q;
-//     ...same logic...
-//     res.status(200).json({ foods });
-//   }
+// Styled to match PLATE's dark dashboard look. All search/debounce/API
+// logic is unchanged from the original — only className values changed.
 
-const USDA_BASE = 'https://api.nal.usda.gov/fdc/v1';
+'use client';
 
-// Simple in-memory cache — resets on cold start, but cuts down on repeat
-// calls for common searches (e.g. multiple users searching "chicken breast").
-const cache = new Map();
-const CACHE_TTL_MS = 1000 * 60 * 60; // 1 hour
+import { useState, useEffect, useRef } from 'react';
 
-// Standard USDA nutrient IDs. These are stable across USDA's data types
-// (Foundation, SR Legacy, Branded) via the /foods/search endpoint, but worth
-// double-checking against a live response for your query set since Branded
-// Foods entries occasionally omit fields that manufacturers didn't submit.
-const NUTRIENT_IDS = {
-  calories: 1008, // Energy (kcal)
-  protein: 1003,  // Protein (g)
-  fat: 1004,      // Total lipid/fat (g)
-  carbs: 1005,    // Carbohydrate, by difference (g)
-  sugar: 2000,    // Sugars, total (g)
-  fiber: 1079,    // Fiber, total dietary (g)
-  sodium: 1093,   // Sodium (mg)
-};
+const PRESET_PORTIONS = [0.5, 1, 1.5, 2];
 
-function pickNutrient(nutrients, id) {
-  const match = nutrients.find((n) => n.nutrientId === id);
-  return match ? match.value : 0;
+function scale(value, multiplier) {
+  return Math.round(value * multiplier * 10) / 10;
 }
 
-function simplifyFood(food) {
-  const nutrients = food.foodNutrients || [];
-  return {
-    fdcId: food.fdcId,
-    name: food.description,
-    brand: food.brandOwner || food.brandName || null,
-    dataType: food.dataType,
-    servingSize: food.servingSize || 100,
-    servingUnit: food.servingSizeUnit || 'g',
-    calories: pickNutrient(nutrients, NUTRIENT_IDS.calories),
-    protein: pickNutrient(nutrients, NUTRIENT_IDS.protein),
-    carbs: pickNutrient(nutrients, NUTRIENT_IDS.carbs),
-    fat: pickNutrient(nutrients, NUTRIENT_IDS.fat),
-    fiber: pickNutrient(nutrients, NUTRIENT_IDS.fiber),
-    sugar: pickNutrient(nutrients, NUTRIENT_IDS.sugar),
-    sodium: pickNutrient(nutrients, NUTRIENT_IDS.sodium),
-  };
-}
+export default function FoodSearch({ onAddFood }) {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [portions, setPortions] = useState({});
+  const debounceRef = useRef(null);
 
-export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const query = searchParams.get('q')?.trim();
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
 
-  if (!query || query.length < 2) {
-    return Response.json({ foods: [] });
-  }
-
-  const cacheKey = query.toLowerCase();
-  const cached = cache.get(cacheKey);
-  if (cached && Date.now() - cached.time < CACHE_TTL_MS) {
-    return Response.json({ foods: cached.foods });
-  }
-
-  const apiKey = process.env.USDA_API_KEY;
-  if (!apiKey) {
-    return Response.json(
-      { error: 'USDA_API_KEY is not configured on the server' },
-      { status: 500 }
-    );
-  }
-
-  const url = new URL(`${USDA_BASE}/foods/search`);
-  url.searchParams.set('query', query);
-  url.searchParams.set('pageSize', '15');
-  url.searchParams.set('dataType', 'Foundation,SR Legacy,Branded');
-  url.searchParams.set('api_key', apiKey);
-
-  try {
-    const res = await fetch(url.toString());
-    if (!res.ok) {
-      return Response.json({ error: `USDA API returned ${res.status}` }, { status: 502 });
+    if (query.trim().length < 2) {
+      setResults([]);
+      return;
     }
-    const data = await res.json();
-    const foods = (data.foods || []).map(simplifyFood);
 
-    cache.set(cacheKey, { foods, time: Date.now() });
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/food-search?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        setResults(data.foods || []);
+      } catch (err) {
+        setError('Search failed — try again');
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 400);
 
-    return Response.json({ foods });
-  } catch (err) {
-    return Response.json({ error: 'Food search failed' }, { status: 500 });
+    return () => clearTimeout(debounceRef.current);
+  }, [query]);
+
+  function handleAdd(food) {
+    const multiplier = portions[food.fdcId] || 1;
+    onAddFood({
+      name: food.name,
+      brand: food.brand,
+      servingSize: food.servingSize,
+      servingUnit: food.servingUnit,
+      portionMultiplier: multiplier,
+      calories: scale(food.calories, multiplier),
+      protein: scale(food.protein, multiplier),
+      carbs: scale(food.carbs, multiplier),
+      fat: scale(food.fat, multiplier),
+      fiber: scale(food.fiber, multiplier),
+      sugar: scale(food.sugar, multiplier),
+      sodium: scale(food.sodium, multiplier),
+    });
+    setQuery('');
+    setResults([]);
   }
+
+  return (
+    <div>
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search a food (e.g. chicken breast)"
+        className="w-full rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-[#F5F5F3] outline-none focus:border-[#8B5CF6]"
+      />
+
+      {loading && <p className="mt-2 text-xs text-[#F5F5F3]/45">Searching…</p>}
+      {error && <p className="mt-2 text-xs text-[#FF5470]">{error}</p>}
+
+      {results.length > 0 && (
+        <ul className="mt-3 space-y-2">
+          {results.map((food) => {
+            const multiplier = portions[food.fdcId] || 1;
+            return (
+              <li
+                key={food.fdcId}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#14161A] p-4"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-[#F5F5F3]">{food.name}</p>
+                  {food.brand && <p className="truncate text-xs text-[#F5F5F3]/40">{food.brand}</p>}
+                  <p className="mt-1 font-mono text-xs text-[#F5F5F3]/55">
+                    {scale(food.calories, multiplier)} kcal · P {scale(food.protein, multiplier)}g ·{' '}
+                    C {scale(food.carbs, multiplier)}g · F {scale(food.fat, multiplier)}g
+                  </p>
+                </div>
+
+                <select
+                  value={multiplier}
+                  onChange={(e) =>
+                    setPortions((p) => ({ ...p, [food.fdcId]: parseFloat(e.target.value) }))
+                  }
+                  className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-[#F5F5F3]"
+                >
+                  {PRESET_PORTIONS.map((p) => (
+                    <option className="bg-[#15171B]" key={p} value={p}>
+                      {p}x ({Math.round(food.servingSize * p)}{food.servingUnit})
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => handleAdd(food)}
+                  className="shrink-0 rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#FF5470] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white hover:opacity-90"
+                >
+                  Add
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
 }

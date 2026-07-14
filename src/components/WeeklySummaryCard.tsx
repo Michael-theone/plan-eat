@@ -1,47 +1,49 @@
 "use client";
 
-import { IBM_Plex_Mono } from "next/font/google";
+import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 
+const display = Space_Grotesk({ subsets: ["latin"], weight: ["600", "700"] });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"] });
 
-interface DayHit {
-  label: string;
-  hit: boolean;
-}
+type WeekDay = { label: string; hit: boolean };
 
-interface WeeklySummaryCardProps {
-  days: DayHit[];
+export default function WeeklySummaryCard({
+  days,
+  avgCalories,
+  avgProtein,
+  daysHit,
+}: {
+  days: WeekDay[];
   avgCalories: number;
   avgProtein: number;
   daysHit: number;
-}
-
-export default function WeeklySummaryCard({ days, avgCalories, avgProtein, daysHit }: WeeklySummaryCardProps) {
+}) {
   return (
-    <div className="rounded-2xl border border-[#1C1B19]/10 bg-[#FAF8F4] p-6 shadow-[0_8px_30px_rgba(28,27,25,0.06)]">
-      <p className={`${mono.className} text-[10px] uppercase tracking-[0.2em] text-[#1C1B19]/50`}>This week</p>
-
-      <div className="mt-4 flex justify-between">
+    <div className="rounded-3xl border border-white/10 bg-[#14161A] p-6">
+      <h3 className={`${display.className} text-lg font-semibold text-[#F5F5F3]`}>This week</h3>
+      <div className="mt-4 grid grid-cols-7 gap-2">
         {days.map((d, i) => (
-          <div key={i} className="flex flex-col items-center gap-2">
-            <span className="text-[10px] uppercase text-[#1C1B19]/50">{d.label}</span>
-            <span className={`h-3 w-3 rounded-full ${d.hit ? "bg-[#6B7A4F]" : "bg-[#1C1B19]/10"}`} />
+          <div key={i} className="flex flex-col items-center">
+            <span className={`${mono.className} text-[10px] text-[#F5F5F3]/40`}>{d.label}</span>
+            <div
+              className="mt-1 h-10 w-full rounded-lg border border-white/10"
+              style={{ background: d.hit ? "linear-gradient(180deg, #8B5CF6, #FF5470)" : "rgba(255,255,255,0.06)" }}
+            />
           </div>
         ))}
       </div>
-
-      <div className="mt-6 grid grid-cols-3 gap-3 text-center">
+      <div className={`${mono.className} mt-6 grid grid-cols-3 gap-4 text-center text-sm`}>
         <div>
-          <p className="text-xl font-bold">{avgCalories}</p>
-          <p className="text-[10px] uppercase text-[#1C1B19]/50">Avg kcal</p>
+          <div className="text-xl font-bold text-[#F5F5F3]">{avgCalories}</div>
+          <div className="text-[10px] uppercase text-[#F5F5F3]/40">Avg kcal</div>
         </div>
         <div>
-          <p className="text-xl font-bold">{avgProtein}g</p>
-          <p className="text-[10px] uppercase text-[#1C1B19]/50">Avg protein</p>
+          <div className="text-xl font-bold text-[#F5F5F3]">{avgProtein}g</div>
+          <div className="text-[10px] uppercase text-[#F5F5F3]/40">Avg protein</div>
         </div>
         <div>
-          <p className="text-xl font-bold">{daysHit}/7</p>
-          <p className="text-[10px] uppercase text-[#1C1B19]/50">Days on target</p>
+          <div className="text-xl font-bold text-[#F5F5F3]">{daysHit}/7</div>
+          <div className="text-[10px] uppercase text-[#F5F5F3]/40">Days on target</div>
         </div>
       </div>
     </div>
